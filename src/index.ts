@@ -1,10 +1,10 @@
-import { init } from "app";
 import "dotenv/config";
+import { runApp } from "./app";
 
 import { logger } from "./utils/logger";
 
 (async () => {
-  console.log(`Env: FOO=${process.env.FOO}`);
-  const res = await init();
+  logger.info(`Env: FOO=${process.env.FOO}`);
+  const res = await runApp();
   console.log(`Result: ${res}`);
 })();

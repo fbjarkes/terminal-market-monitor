@@ -1,9 +1,9 @@
 import chai, { expect } from "chai";
-import { init } from "app";
+import { runApp } from "./app";
 
 describe("MyApp", () => {
   it("should return Hello World!", async () => {
-    const result = await init();
-    expect(result).to.equal("Hello World!");
+    const res = await runApp();
+    expect(res).to.equal("Hello World!");
   });
 });

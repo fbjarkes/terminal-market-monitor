@@ -1,6 +1,6 @@
 import { logger } from './utils/logger';
 interface Data {
-    foo: string;
+    foo: any;
     bar: any;
 }
 

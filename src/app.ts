@@ -1,5 +1,6 @@
-import { logger } from "./utils/logger";
+import { logger } from './utils/logger';
 
 export const runApp = async () => {
-  return "Hello World!";
+	const a = 'a';
+	return 'Hello World!';
 };

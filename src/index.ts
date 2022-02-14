@@ -1,35 +1,43 @@
 import 'dotenv/config';
+import yargs from 'yargs/yargs';
 import { lightgreen, red, plot, PlotConfig } from 'asciichart';
+import Alpaca from '@alpacahq/alpaca-trade-api';
 
 import { logger } from './utils/logger';
-import { getNewHighs, getNewLows, sleep } from './utils/helper';
+import { getNewHighs, getNewLows, sleep, getSymbols, downloadSnapshot } from './utils/helper';
 
 const MAX_LEN = 100; // TODO: if terminal width is less than 100, use that instead
+const MAX_SYMBOL_PARAMS = 500; // URL query parameter max length is 2048
+
+const argParser = yargs(process.argv.slice(2)).options({
+    symbols: { type: 'string', alias: 's' },
+    symbolsFile: { type: 'string', alias: 'f' },
+});
 
 (async () => {
-    logger.info(`Env: APY_KEY=${process.env.API_KEY}`);
-    const h: number[] = [];
-    const l: number[] = [];
+    const args = await argParser.argv;
+    const symbols = await getSymbols(args.symbols, args.symbolsFile);
 
-    const config: PlotConfig = { offset: 2, colors: [lightgreen, red] };
+    const alpaca = new Alpaca({
+        keyId: process.env.KEY_ID,
+        secretKey: process.env.API_KEY,
+        paper: true,
+        usePolygon: false,
+    });
 
-    h.push(0);
-    l.push(0);
     while (1) {
-        await Promise.all([getNewHighs(), getNewLows()]).then(([high, low]) => {
-            if (h.length === MAX_LEN) {
-                h.shift();
-                l.shift();
-            }
-            //h.push((high / NBR_STOCKS) * 100);
-            //l.push((low / NBR_STOCKS) * 100);
-            h.push(high + h[h.length - 1]);
-            l.push(low + l[l.length - 1]);
-        });
-        //console.log(h);
-
-        console.clear();
-        console.log(plot([h, l], config));
-        await sleep(500);
+        console.log('==========================================================');
+        logger.info(`Downloading snapshot for ${symbols.length} symbols`);
+        // 1. download snapshots
+        const snapshots = await downloadSnapshot(symbols, alpaca);
+        console.log('AAPL High:', snapshots['AAPL'].High);
+        console.log('TSLA High:', snapshots['TSLA'].High);
+        // 2. if prevSnapshots is not empty, then compare with new snapshots
+        // 3. Count number of new highs and lows
+        // 4. prevSnapshots = currSnapshots
+        // 5. push new highs/lows percentage to h/l array
+        // 7. plot h/l arrays
+        // 8. sleep
+        await sleep(1000);
     }
 })();

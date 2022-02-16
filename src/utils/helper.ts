@@ -2,6 +2,8 @@ import Alpaca from '@alpacahq/alpaca-trade-api';
 import fs from 'fs/promises';
 import { random } from 'lodash';
 
+import { logger } from '../utils/logger';
+
 export type Snapshot = {
     High: number;
     Low: number;
@@ -28,38 +30,43 @@ export const getSymbols = async (
 };
 
 export const downloadSnapshot = async (symbols: string[], alpaca: Alpaca): Promise<SnapshotMapping> => {
-    //const snapshots = await alpaca.getSnapshots(symbols);
-    const snapshots = [
-        {
-            symbol: 'AAPL',
-            DailyBar: {
-                Timestamp: '2020-01-01T00:00:00.000Z',
-                OpenPrice: 100.0,
-                HighPrice: 100.0 + (Math.random() * 10 < 5 ? 0 : 10),
-                LowPrice: 100.0 + (Math.random() * 10 < 5 ? 0 : 10),
-                ClosePrice: 100.0,
-                Volume: 100,
-            },
-        },
-        {
-            symbol: 'TSLA',
-            DailyBar: {
-                Timestamp: '2020-01-01T00:00:00.000Z',
-                OpenPrice: 100.0,
-                HighPrice: 100.0 + (Math.random() * 10 < 5 ? 0 : 10),
-                LowPrice: 100.0 + (Math.random() * 10 < 5 ? 0 : 10),
-                ClosePrice: 100.0,
-                Volume: 100,
-            },
-        },
-    ];
+    logger.info(`Downloading snapshot for ${symbols.length} symbols`);
+    const snapshots = await alpaca.getSnapshots(symbols);
+    logger.debug(`Got ${snapshots.length} snapshots`);
+    // const snapshots = [
+    //     {
+    //         symbol: 'AAPL',
+    //         MinuteBar: {
+    //             Timestamp: '2020-01-01T00:00:00.000Z',
+    //             OpenPrice: 100.0,
+    //             HighPrice: 100.0 + (Math.random() * 10 < 5 ? 0 : 10),
+    //             LowPrice: 100.0 + (Math.random() * 10 < 5 ? 0 : 10),
+    //             ClosePrice: 100.0,
+    //             Volume: 100,
+    //         },
+    //     },
+    //     {
+    //         symbol: 'TSLA',
+    //         MinuteBar: {
+    //             Timestamp: '2020-01-01T00:00:00.000Z',
+    //             OpenPrice: 100.0,
+    //             HighPrice: 100.0 + (Math.random() * 10 < 5 ? 0 : 10),
+    //             LowPrice: 100.0 + (Math.random() * 10 < 5 ? 0 : 10),
+    //             ClosePrice: 100.0,
+    //             Volume: 100,
+    //         },
+    //     },
+    // ];
     const res: SnapshotMapping = {};
     snapshots.forEach((s) => {
-        res[s.symbol] = {
-            High: s.DailyBar.HighPrice,
-            Low: s.DailyBar.LowPrice,
-            Close: s.DailyBar.ClosePrice,
-        };
+        const symbol = (s as any).symbol;
+        if (s.DailyBar) {
+            res[symbol] = {
+                High: s.DailyBar.HighPrice,
+                Low: s.DailyBar.LowPrice,
+                Close: s.DailyBar.ClosePrice,
+            };
+        }
     });
     return res;
 };

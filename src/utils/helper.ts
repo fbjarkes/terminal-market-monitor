@@ -1,13 +1,19 @@
 import Alpaca from '@alpacahq/alpaca-trade-api';
 import fs from 'fs/promises';
 import { random } from 'lodash';
+import { DataPoint, DataPoints } from 'src/types';
 
 import { logger } from '../utils/logger';
 
 export type Snapshot = {
+    Open: number;
     High: number;
     Low: number;
     Close: number;
+    prevOpen: number;
+    prevHigh: number;
+    prevLow: number;
+    prevClose: number;
 };
 
 export type SnapshotMapping = {
@@ -60,11 +66,16 @@ export const downloadSnapshot = async (symbols: string[], alpaca: Alpaca): Promi
     const res: SnapshotMapping = {};
     snapshots.forEach((s) => {
         const symbol = (s as any).symbol;
-        if (s.DailyBar) {
+        if (s.DailyBar && s.PrevDailyBar) {
             res[symbol] = {
+                Open: s.DailyBar.OpenPrice,
                 High: s.DailyBar.HighPrice,
                 Low: s.DailyBar.LowPrice,
                 Close: s.DailyBar.ClosePrice,
+                prevOpen: s.PrevDailyBar.OpenPrice,
+                prevHigh: s.PrevDailyBar.HighPrice,
+                prevLow: s.PrevDailyBar.LowPrice,
+                prevClose: s.PrevDailyBar.ClosePrice,
             };
         }
     });
@@ -94,10 +105,79 @@ export const countNewHighs = (prev: SnapshotMapping, curr: SnapshotMapping): num
 // eslint-disable-next-line no-undef
 export const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-export const getNewHighs = async () => {
-    return random(-2, 2);
+export const countMetrics = (prev: SnapshotMapping, curr: SnapshotMapping): DataPoint => {
+    const dp: DataPoint = {
+        newHighs: 0,
+        newLows: 0,
+        aboveOpen: 0,
+        belowOpen: 0,
+        abovePrevHigh: 0,
+        belowPrevLow: 0,
+        abovePrevClose: 0,
+        belowPrevClose: 0,
+    };
+
+    for (const symbol in curr) {
+        if (prev[symbol]) {
+            if (prev[symbol].High < curr[symbol].High) {
+                dp.newHighs++;
+            }
+            if (prev[symbol].Low > curr[symbol].Low) {
+                dp.newLows++;
+            }
+            if (prev[symbol].Open < curr[symbol].Close) {
+                dp.aboveOpen++;
+            }
+            if (prev[symbol].Open > curr[symbol].Close) {
+                dp.belowOpen++;
+            }
+            if (prev[symbol].prevClose < curr[symbol].Close) {
+                dp.abovePrevClose++;
+            }
+            if (prev[symbol].prevClose > curr[symbol].Close) {
+                dp.belowPrevClose++;
+            }
+            if (prev[symbol].prevHigh < curr[symbol].Close) {
+                dp.abovePrevHigh++;
+            }
+            if (prev[symbol].prevLow > curr[symbol].Close) {
+                dp.belowPrevLow++;
+            }
+        }
+    }
+
+    return dp;
 };
 
-export const getNewLows = async () => {
-    return random(-2, 2);
+export const toPercentage = (dp: DataPoint, totalCounts: number): DataPoint => {
+    return {
+        newHighs: (dp.newHighs / totalCounts) * 100,
+        newLows: (dp.newLows / totalCounts) * 100,
+        aboveOpen: (dp.aboveOpen / totalCounts) * 100,
+        belowOpen: (dp.belowOpen / totalCounts) * 100,
+        abovePrevClose: (dp.abovePrevClose / totalCounts) * 100,
+        belowPrevClose: (dp.belowPrevClose / totalCounts) * 100,
+        abovePrevHigh: (dp.abovePrevHigh / totalCounts) * 100,
+        belowPrevLow: (dp.belowPrevLow / totalCounts) * 100,
+    };
+};
+
+export const mergeDataPoints = (plotData: DataPoints, dpPercentage: DataPoint, plotLength: number): void => {
+    // Shift the data points to the left, in order to keep the plot length constant
+    if (plotData.newHighs.length == plotLength) {
+        plotData.newHighs.shift();
+    }
+    if (plotData.newLows.length == plotLength) {
+        plotData.newLows.shift();
+    }
+    if (plotData.aboveOpen.length == plotLength) {
+        plotData.aboveOpen.shift();
+    }
+    if (plotData.belowOpen.length == plotLength) {
+        plotData.belowOpen.shift();
+    }
+    plotData.newHighs.push(dpPercentage.newHighs);
+    plotData.newLows.push(dpPercentage.newLows);
+    plotData.aboveOpen.push(dpPercentage.aboveOpen);
+    plotData.belowOpen.push(dpPercentage.belowOpen);
 };

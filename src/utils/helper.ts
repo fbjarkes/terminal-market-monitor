@@ -163,21 +163,20 @@ export const toPercentage = (dp: DataPoint, totalCounts: number): DataPoint => {
 };
 
 export const mergeDataPoints = (plotData: DataPoints, dpPercentage: DataPoint, plotLength: number): void => {
-    // Shift the data points to the left, in order to keep the plot length constant
-    if (plotData.newHighs.length == plotLength) {
-        plotData.newHighs.shift();
-    }
-    if (plotData.newLows.length == plotLength) {
-        plotData.newLows.shift();
-    }
-    if (plotData.aboveOpen.length == plotLength) {
-        plotData.aboveOpen.shift();
-    }
-    if (plotData.belowOpen.length == plotLength) {
-        plotData.belowOpen.shift();
-    }
+    // TODO: Shift the data points to the left, in order to keep the plot length constant
+    // Object.keys(plotData).forEach((key: string) => {
+    //     const arr = plotData[key];
+    //     // if (plotData[key] === plotLength) {
+    //     //     plotData[key].shift();
+    //     // }
+    // });
+
     plotData.newHighs.push(dpPercentage.newHighs);
     plotData.newLows.push(dpPercentage.newLows);
     plotData.aboveOpen.push(dpPercentage.aboveOpen);
     plotData.belowOpen.push(dpPercentage.belowOpen);
+    plotData.abovePrevHigh.push(dpPercentage.abovePrevHigh);
+    plotData.belowPrevLow.push(dpPercentage.belowPrevLow);
+    plotData.abovePrevClose.push(dpPercentage.abovePrevClose);
+    plotData.belowPrevClose.push(dpPercentage.belowPrevClose);
 };

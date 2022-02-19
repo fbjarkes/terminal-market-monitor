@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import yargs from 'yargs/yargs';
-import { lightgreen, lightcyan, red, blue, yellow, plot, PlotConfig } from 'asciichart';
+import { lightgreen, lightcyan, red, lightgray, yellow, plot, PlotConfig } from 'asciichart';
 import Alpaca from '@alpacahq/alpaca-trade-api';
 
 import { logger } from './utils/logger';
@@ -26,14 +26,14 @@ const argParser = yargs(process.argv.slice(2)).options({
         usePolygon: false,
     });
     logger.info('Alpaca API keys: ', process.env.KEY_ID, process.env.SECRET_KEY); // TOOD: logger should print a string parameter!
-    const config: PlotConfig = { offset: 2, colors: [lightgreen, red, blue, lightcyan, yellow], height: 20 };
+    const config: PlotConfig = { offset: 2, colors: [lightgreen, red, lightgray, lightcyan, yellow], height: 20 };
 
     let prevSnapshots;
 
-    //const highs: number[] = [];
+    //const highs: number[] = [];   
     //const lows: number[] = [];
     //symbols = ['AAPL', 'TSLA', 'SPY', 'QQQ', 'MSFT', 'AMZN', 'FB'];
-    const dpPercentages: DataPoints = {
+    const plotData: DataPoints = {
         newHighs: [],
         newLows: [],
         aboveOpen: [],
@@ -51,18 +51,18 @@ const argParser = yargs(process.argv.slice(2)).options({
                 // R.pipe(countMetrics, ToPercentage, mergeDataPoints)
                 const dp = countMetrics(prevSnapshots, snapshots);
                 const dpPercent = toPercentage(dp, Object.keys(prevSnapshots).length);
-                mergeDataPoints(dpPercentages, dpPercent, MAX_LEN);
+                mergeDataPoints(plotData, dpPercent, MAX_LEN);
                 prevSnapshots = snapshots;
 
                 console.clear();
                 console.log(
                     plot(
                         [
-                            dpPercentages.newHighs,
-                            dpPercentages.newLows,
-                            dpPercentages.aboveOpen,
-                            dpPercentages.abovePrevHigh,
-                            dpPercentages.belowPrevLow,
+                            plotData.newHighs,
+                            plotData.newLows,
+                            plotData.aboveOpen,
+                            plotData.abovePrevHigh,
+                            plotData.belowPrevLow,
                         ],
                         config,
                     ),

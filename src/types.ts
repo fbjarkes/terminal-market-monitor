@@ -1,6 +1,6 @@
 export type DataPoint = {
-    newHighs: number;
-    newLows: number;
+    newHigh: number;
+    newLow: number;
     aboveOpen: number;
     belowOpen: number;
     abovePrevHigh: number;
@@ -12,10 +12,10 @@ export type DataPoint = {
 export type DataPoints = {
     newHighs: number[];
     newLows: number[];
-    aboveOpen: number[];
-    belowOpen: number[];
-    abovePrevHigh: number[];
-    belowPrevLow: number[];
-    abovePrevClose: number[];
-    belowPrevClose: number[];
+    aboveOpens: number[];
+    belowOpens: number[];
+    abovePrevHighs: number[];
+    belowPrevLows: number[];
+    abovePrevCloses: number[];
+    belowPrevCloses: number[];
 };

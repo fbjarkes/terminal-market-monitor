@@ -16,7 +16,7 @@ export type Snapshot = {
     prevClose: number;
 };
 
-export type SnapshotMapping = {
+export type SymbolSnapshotMap = {
     [key: string]: Snapshot;
 };
 
@@ -35,7 +35,7 @@ export const getSymbols = async (
     return [];
 };
 
-export const downloadSnapshot = async (symbols: string[], alpaca: Alpaca): Promise<SnapshotMapping> => {
+export const downloadSnapshot = async (symbols: string[], alpaca: Alpaca): Promise<SymbolSnapshotMap> => {
     logger.info(`Downloading snapshot for ${symbols.length} symbols`);
     const snapshots = await alpaca.getSnapshots(symbols);
     logger.debug(`Got ${snapshots.length} snapshots`);
@@ -63,7 +63,7 @@ export const downloadSnapshot = async (symbols: string[], alpaca: Alpaca): Promi
     //         },
     //     },
     // ];
-    const res: SnapshotMapping = {};
+    const res: SymbolSnapshotMap = {};
     snapshots.forEach((s) => {
         const symbol = (s as any).symbol;
         if (s.DailyBar && s.PrevDailyBar) {
@@ -82,7 +82,7 @@ export const downloadSnapshot = async (symbols: string[], alpaca: Alpaca): Promi
     return res;
 };
 
-export const countNewLows = (prev: SnapshotMapping, curr: SnapshotMapping): number => {
+export const countNewLows = (prev: SymbolSnapshotMap, curr: SymbolSnapshotMap): number => {
     let count = 0;
     for (const symbol in curr) {
         if (prev[symbol] && prev[symbol].Low > curr[symbol].Low) {
@@ -92,7 +92,7 @@ export const countNewLows = (prev: SnapshotMapping, curr: SnapshotMapping): numb
     return count as number;
 };
 
-export const countNewHighs = (prev: SnapshotMapping, curr: SnapshotMapping): number => {
+export const countNewHighs = (prev: SymbolSnapshotMap, curr: SymbolSnapshotMap): number => {
     let count = 0;
     for (const symbol in curr) {
         if (prev[symbol] && prev[symbol].High < curr[symbol].High) {
@@ -105,10 +105,10 @@ export const countNewHighs = (prev: SnapshotMapping, curr: SnapshotMapping): num
 // eslint-disable-next-line no-undef
 export const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-export const countMetrics = (prev: SnapshotMapping, curr: SnapshotMapping): DataPoint => {
+export const countMetrics = (prev: SymbolSnapshotMap, curr: SymbolSnapshotMap): DataPoint => {
     const dp: DataPoint = {
-        newHighs: 0,
-        newLows: 0,
+        newHigh: 0,
+        newLow: 0,
         aboveOpen: 0,
         belowOpen: 0,
         abovePrevHigh: 0,
@@ -120,10 +120,10 @@ export const countMetrics = (prev: SnapshotMapping, curr: SnapshotMapping): Data
     for (const symbol in curr) {
         if (prev[symbol]) {
             if (prev[symbol].High < curr[symbol].High) {
-                dp.newHighs++;
+                dp.newHigh++;
             }
             if (prev[symbol].Low > curr[symbol].Low) {
-                dp.newLows++;
+                dp.newLow++;
             }
             if (prev[symbol].Open < curr[symbol].Close) {
                 dp.aboveOpen++;
@@ -151,8 +151,8 @@ export const countMetrics = (prev: SnapshotMapping, curr: SnapshotMapping): Data
 
 export const toPercentage = (dp: DataPoint, totalCounts: number): DataPoint => {
     return {
-        newHighs: (dp.newHighs / totalCounts) * 100,
-        newLows: (dp.newLows / totalCounts) * 100,
+        newHigh: (dp.newHigh / totalCounts) * 100,
+        newLow: (dp.newLow / totalCounts) * 100,
         aboveOpen: (dp.aboveOpen / totalCounts) * 100,
         belowOpen: (dp.belowOpen / totalCounts) * 100,
         abovePrevClose: (dp.abovePrevClose / totalCounts) * 100,
@@ -164,19 +164,18 @@ export const toPercentage = (dp: DataPoint, totalCounts: number): DataPoint => {
 
 export const mergeDataPoints = (plotData: DataPoints, dpPercentage: DataPoint, plotLength: number): void => {
     // TODO: Shift the data points to the left, in order to keep the plot length constant
-    // Object.keys(plotData).forEach((key: string) => {
-    //     const arr = plotData[key];
-    //     // if (plotData[key] === plotLength) {
-    //     //     plotData[key].shift();
-    //     // }
-    // });
+    for (const [, v] of Object.entries(plotData)) {
+        if (v.length === plotLength) {
+            v.shift();
+        }
+    }
 
-    plotData.newHighs.push(dpPercentage.newHighs);
-    plotData.newLows.push(dpPercentage.newLows);
-    plotData.aboveOpen.push(dpPercentage.aboveOpen);
-    plotData.belowOpen.push(dpPercentage.belowOpen);
-    plotData.abovePrevHigh.push(dpPercentage.abovePrevHigh);
-    plotData.belowPrevLow.push(dpPercentage.belowPrevLow);
-    plotData.abovePrevClose.push(dpPercentage.abovePrevClose);
-    plotData.belowPrevClose.push(dpPercentage.belowPrevClose);
+    plotData.newHighs.push(dpPercentage.newHigh);
+    plotData.newLows.push(dpPercentage.newLow);
+    plotData.aboveOpens.push(dpPercentage.aboveOpen);
+    plotData.belowOpens.push(dpPercentage.belowOpen);
+    plotData.abovePrevHighs.push(dpPercentage.abovePrevHigh);
+    plotData.belowPrevLows.push(dpPercentage.belowPrevLow);
+    plotData.abovePrevCloses.push(dpPercentage.abovePrevClose);
+    plotData.belowPrevCloses.push(dpPercentage.belowPrevClose);
 };

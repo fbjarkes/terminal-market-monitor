@@ -30,18 +30,18 @@ const argParser = yargs(process.argv.slice(2)).options({
 
     let prevSnapshots;
 
-    //const highs: number[] = [];   
+    //const highs: number[] = [];
     //const lows: number[] = [];
     //symbols = ['AAPL', 'TSLA', 'SPY', 'QQQ', 'MSFT', 'AMZN', 'FB'];
     const plotData: DataPoints = {
         newHighs: [],
         newLows: [],
-        aboveOpen: [],
-        belowOpen: [],
-        abovePrevHigh: [],
-        belowPrevLow: [],
-        abovePrevClose: [],
-        belowPrevClose: [],
+        aboveOpens: [],
+        belowOpens: [],
+        abovePrevHighs: [],
+        belowPrevLows: [],
+        abovePrevCloses: [],
+        belowPrevCloses: [],
     };
 
     while (1) {
@@ -60,9 +60,9 @@ const argParser = yargs(process.argv.slice(2)).options({
                         [
                             plotData.newHighs,
                             plotData.newLows,
-                            plotData.aboveOpen,
-                            plotData.abovePrevHigh,
-                            plotData.belowPrevLow,
+                            plotData.aboveOpens,
+                            plotData.abovePrevHighs,
+                            plotData.belowPrevLows,
                         ],
                         config,
                     ),
